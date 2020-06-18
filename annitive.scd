@@ -7,13 +7,22 @@
 //TODO: populate with low amplitude high freq noise to provide a rich dataset for simpler spectra
 //TODO: add volume control
 
+//there are two parts to be intrepreted in the code, first place the cursor somewhere between
+//the first pair of parentheses and press Cmd-Return (Ctrl-Enter on the PC)
+//and then do the same with the second pair of parentheses to start the GUI
+//check the post window for updates
+
+// a monophonic clarinet sample as well as a clarinet multiphonic are added to test
+
+
 //TRAINING SPECTRA
 (
 ~analyze = Routine({
 ~freqsAndAmps1 = List[];
 ~freqsAndAmps2 = List[];
 ~freqsAndAmps3 = List[];
-~newFreqs = List[];
+~newFreqs = Array.new;
+~newAmps = Array.new;
 ~freqs1 = Array.new;
 ~amps1 = Array.new;
 ~freqs2 = Array.new;
@@ -21,7 +30,7 @@
 ~freqs3 = Array.new;
 ~amps3 = Array.new;
 
-// ~atsFile = AtsFile.new("/Users/rikyu/Desktop/PORTFOLIO/NEW_ANN/clarinet.ats".standardizePath).load;
+	// ~atsFile = AtsFile.new("/Users/rikyu/Desktop/PORTFOLIO/NEW_ANN/clarinet.ats".standardizePath).load;
 ~atsFrame1 = Array[10];
 ~atsFrame2 = Array[20];
 ~atsFrame3 = Array[15];
@@ -76,31 +85,13 @@ for (0, ~freqs3[~freqs3.size-2], { arg i=0; ~freqsAndAmps3.add(~freqs3[i]); ~fre
 
 	"spectral data is read from ANN. You can hear it now.".postln;
 });
-
-//play the test spectrum
-
-~source = SynthDef(\source, {
-	var sig, env;
-	sig = LeakDC.ar(Klang.ar(`[ ~freqs3, ~amps3 ],
-	1, 0) * 0.4);
-	env = EnvGen.kr(Env([0,1,0], [1,1]), doneAction: Done.freeSelf);
-	Out.ar([0,1], sig*env);
-}).add;
-
-// ~source = {LeakDC.ar(Klang.ar(`[ ~freqs3, ~amps3 ],
-// 1, 0) * 0.4)};
-
-//timbre created by the ANN, based on the source timbre(
-
-~result = SynthDef(\result, {
-	var sig, env;
-	sig = LeakDC.ar(Klang.ar(`[ ~newFreqs, ~newAmps ],
-	1, 0) * 0.4);
-	env = EnvGen.kr(Env([0,1,0], [1,1]), doneAction: Done.freeSelf);
-	Out.ar([0,1], Limiter.ar(sig*env,0.1));
-}).add;
 )
 
+//GUI: first select the ATS file.
+//click "Analyze for ANN" to analyze and create .txt files for the neural network training & testing
+//run the python file, return to SC
+//click "Synthesize for ANN" to read the generated spectrum data
+//compare the source sound with the generated one by playing
 
 (
 var atsFile, enView, openButton, atsBuf, atsPath, atsDispButton, entDispButton, win, atsDisp;
@@ -143,36 +134,25 @@ atsDispButton= Button.new(win, Rect(30, 50, 250, 30))
 ~playOriginal = Button.new(win, Rect(163, 150, 150, 30))
 .states_([["PLAY the test spectrum",Color.black, Color.new(0.76396951675415, 0.87935035228729, 0.62494311332703)]])
 .action_({
-	~source.play;
-	// AppClock.play(~source.reset);
+~source = SynthDef(\source, {
+	var sig, env;
+	sig = LeakDC.ar(Klang.ar(`[ ~freqs3, ~amps3 ],
+	1, 0) * 0.4);
+	env = EnvGen.kr(Env([0,1,0], [1,1]), doneAction: Done.freeSelf);
+	Out.ar([0,1], sig*env);
+}).play;
 });
 
 ~playResult = Button.new(win, Rect(400, 150, 150, 30))
 .states_([["PLAY the result",Color.black, Color.new(0.76396951675415, 0.87935035228729, 0.62494311332703)]])
 .action_({
-	~result.play;
-	// AppClock.play(~result.reset);
+
+~result = SynthDef(\result, {
+	var sig, env;
+	sig = LeakDC.ar(Klang.ar(`[ ~newFreqs, ~newAmps ],
+	1, 0) * 0.4);
+	env = EnvGen.kr(Env([0,1,0], [1,1]), doneAction: Done.freeSelf);
+	Out.ar([0,1], Limiter.ar(sig*env,0.1));
+}).play;
 });
-
-// //STOP
-// ~stopOriginal = Button.new(win, Rect(163, 190, 50, 30))
-// .states_([["STOP",Color.black, Color.new(0.76396951675415, 0.87935035228729, 0.62494311332703)]])
-// .action_({
-// 	~play_source.stop;
-// });
-//
-// ~stopResult = Button.new(win, Rect(500, 190, 50, 30))
-// .states_([["STOP",Color.black, Color.new(0.76396951675415, 0.87935035228729, 0.62494311332703)]])
-// .action_({
-// 	~play_result.stop;
-// });
-
-
 )
-
-
-Routine
-
-
-
-
